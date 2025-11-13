@@ -15,7 +15,7 @@ echo -n "Please enter your username: "
 read username
 echo -n "Please enter your password(will be hidden): "
 read -s password
-cat <<EOF >> ~/.zshrc
+cat << EOF >> ~/.zshrc
 export THISDL_USERNAME="$username"
 export THISDL_PASSWORD="$password"
 alias dlfetch="source $(pwd)/.venv/bin/activate && python3 $(pwd)/main.py && deactivate"
