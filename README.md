@@ -23,7 +23,7 @@ alias dlfetch=". $(pwd)/.venv/bin/activate&&python3 $(pwd)/main.py&&deactivate"
 EOF
 ```
 ### 5. Install dependencies
-Use command `. ./.venv/bin/activate&&python3 -m pip install -r requirements.txt&&deactivate` to install dependencies.
+Use command `. ./.venv/bin/activate&&pip install -r requirements.txt&&deactivate` to install dependencies.
 ### 6. Enjoy it!
 Use command `dlfetch` to fetch your data anywhere!
 
