@@ -24,7 +24,7 @@ EOF
 ### 4. Install dependencies
 Use command `pip install -r requirements.txt` to install dependencies.
 ### 5. Enjoy it!
-Use command `dlfetch`to fetch your data anywhere!
+Use command `dlfetch` to fetch your data anywhere!
 
 ---
 **If you like this project, please give me a star!**
