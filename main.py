@@ -43,6 +43,7 @@ semesters = requests.get(
 if not semesters:
     print("No semesters found.")
     print("Please try again later.")
+    open(session_path, 'w').close()
     exit(1)
 
 current_semester = next(s for s in semesters if s["isNow"])
