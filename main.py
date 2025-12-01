@@ -1,6 +1,5 @@
 #! python3
 # -*- coding: utf-8 -*-
-import ast
 import datetime
 import os
 from sys import exit
