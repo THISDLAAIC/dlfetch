@@ -1,101 +1,64 @@
 #! python3
 # -*- coding: utf-8 -*-
-import datetime
-import os
-from sys import exit
+import argparse
 
-import requests
+from cmd_info import cmd_info
+from cmd_tasks import cmd_tasks
+from cmd_schedule import cmd_schedule
+from cmd_gpa import cmd_gpa
 
-from SignIn import sign_in
-from constants import logo, headers
-from utils import parse_date_string, get_info_lines
+EPILOG = """\
+examples:
+  dlfetch                  Default neofetch-style overview
+  dlfetch tasks            Show all recent tasks with scores
+  dlfetch tasks -p         Show only unfinished tasks
+  dlfetch tasks -l 20      Fetch the last 20 tasks
+  dlfetch schedule         Show today's schedule
+  dlfetch schedule -t      Show tomorrow's schedule
+  dlfetch schedule -w      Show this week as a timetable
+  dlfetch schedule -d 2026-06-01
+                           Show schedule for a specific date
+  dlfetch gpa              Show current semester GPA
+"""
 
-session_path = os.path.expanduser("~/.dlfetch_session")
-print("Loading session...")
 
-session_id = None
+def main():
+    parser = argparse.ArgumentParser(
+        prog="dlfetch",
+        description="🐱 A neofetch-style CLI for THISDL students",
+        epilog=EPILOG,
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    sub = parser.add_subparsers(dest="command", metavar="")
 
-if os.path.exists(session_path):
-    with open(session_path) as session_file:
-        session_id = session_file.read()
+    sub.add_parser("info", help="Neofetch-style semester overview (default)")
 
-semesters = []
+    p_tasks = sub.add_parser("tasks", help="List learning tasks with scores and deadlines")
+    p_tasks.add_argument("-p", "--pending", action="store_true", help="Show only unfinished tasks")
+    p_tasks.add_argument("-l", "--limit", type=int, metavar="N", help="Max number of tasks to fetch (default: 50)")
 
-if session_id:
-    semesters = requests.get(
-        "https://thisdlstu.schoolis.cn/api/School/GetSchoolSemesters",
-        headers=headers,
-        cookies={
-            "SessionId": session_id
-        }
-    ).json().get("data")
+    p_sched = sub.add_parser("schedule", help="View daily or weekly class schedule")
+    date_group = p_sched.add_mutually_exclusive_group()
+    date_group.add_argument("-t", "--tomorrow", action="store_true", help="Show tomorrow's schedule")
+    date_group.add_argument("-w", "--week", action="store_true", help="Show this week as a timetable grid")
+    date_group.add_argument("-d", "--date", type=str, metavar="YYYY-MM-DD", help="Show schedule for a specific date")
 
-    if not semesters:
-        session_id = None
+    sub.add_parser("gpa", help="Show current semester GPA")
 
-if not session_id:
-    print("session_id are empty! Trying to sign in...")
-    session_id = sign_in()
-    with open(session_path, 'w') as session_file:
-        session_file.write(session_id)
+    args = parser.parse_args()
 
-if not session_id:
-    print("Login failed.")
-    exit(1)
-
-cookies_dict = {
-    "SessionId": session_id
-}
-
-if not semesters:
-    semesters = requests.get(
-        "https://thisdlstu.schoolis.cn/api/School/GetSchoolSemesters",
-        headers=headers,
-        cookies={
-            "SessionId": session_id
-        }
-    ).json().get("data")
-
-current_semester = next(s for s in semesters if s["isNow"])
-current_semester_id = current_semester["id"]
-
-tasks = requests.get(
-        f"https://thisdlstu.schoolis.cn/api/LearningTask/GetList?semesterId={current_semester_id}&pageIndex=1&pageSize=12",
-        headers=headers,
-        cookies=cookies_dict
-    ).json()["data"]["list"]
-unfinished = [t for t in tasks if not t["finishState"]]
-
-# 🎓 获取 GPA
-realtime_GPA = requests.get(
-    f"https://thisdlstu.schoolis.cn/api/DynamicScore/GetGpa?semesterId={current_semester_id}",
-    headers=headers,
-    cookies=cookies_dict
-).json()["data"]
-
-# 📅 获取课程表
-schedule = requests.post(
-    "https://rs.api.thisdlit.com/high_school",
-    headers=headers,
-    cookies=cookies_dict,
-    json={
-        "beginTime": str(datetime.date.today()),
-        "endTime": str(datetime.date.today()),
+    commands = {
+        "info": cmd_info,
+        "tasks": cmd_tasks,
+        "schedule": cmd_schedule,
+        "gpa": cmd_gpa,
     }
-).json()["data"]
+
+    if args.command:
+        commands[args.command](args)
+    else:
+        cmd_info(args)
 
 
-future_lessons = sorted(
-    [l for l in schedule if parse_date_string(l["beginTime"]) >= datetime.datetime.now(tz=parse_date_string(l["beginTime"]).tzinfo)],
-    key=lambda l: parse_date_string(l["beginTime"])
-)
-next_lesson = future_lessons[0] if future_lessons else None
-
-info_lines = get_info_lines(current_semester, unfinished, next_lesson, realtime_GPA, current_semester_id)
-
-# 🧩 Neofetch 风格输出
-max_lines = max(len(logo), len(info_lines))
-for i in range(max_lines):
-    left = logo[i] if i < len(logo) else " " * 9
-    right = info_lines[i] if i < len(info_lines) else ""
-    print(f"{left:<10}  {right}")
+if __name__ == "__main__":
+    main()
