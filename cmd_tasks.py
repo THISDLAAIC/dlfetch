@@ -201,7 +201,6 @@ def cmd_tasks(args):
             print(f"  [{t['id']}] {t['name']}{score_str}")
             if t.get('subjectName') and not subject_id:
                 print(f"    Subject: {t['subjectName']}")
-            print()
 
     if unfinished:
         print(f"{YELLOW}⏳ Not handed in:{RESET}")
@@ -215,6 +214,5 @@ def cmd_tasks(args):
                 end_dt = parse_date_string(t['endTime'])
                 if end_dt:
                     print(f"    Deadline: {end_dt.strftime('%Y-%m-%d %H:%M')}")
-            print()
 
     print(f"Total: {len(tasks)} | {GREEN}Done: {len(finished)}{RESET} | {YELLOW}Pending: {len(unfinished)}{RESET}")
