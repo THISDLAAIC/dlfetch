@@ -119,6 +119,7 @@ def cmd_tasks(args):
         class_max = t.get("classMaxScore")
         finished = t["finishState"]
         comment = t.get("comment") or t.get("remark") or ""
+        content = t.get("content") or ""
         attachments = t.get("learningTaskDocuments", [])
         eva = t.get("evaProjects", [])
 
@@ -143,6 +144,9 @@ def cmd_tasks(args):
 
         if comment:
             print(f"  Comment   : {comment}")
+
+        if content:
+            print(f"  Content   : {content}")
 
         if attachments:
             print(f"  Attachments:")
