@@ -3,7 +3,7 @@
 import argparse
 
 from cmd_info import cmd_info
-from cmd_tasks import cmd_tasks
+from cmd_tasks import cmd_tasks, cmd_submit
 from cmd_schedule import cmd_schedule
 from cmd_gpa import cmd_gpa
 from cmd_list import cmd_list
@@ -16,6 +16,8 @@ examples:
   dlfetch tasks -p         Show only unfinished tasks
   dlfetch tasks -s EN203   Filter tasks by subject code
   dlfetch tasks -l 20      Fetch the last 20 tasks
+  dlfetch submit 2259391 -f homework.pdf -m "done"
+                           Upload and submit a task
   dlfetch schedule         Show today's schedule
   dlfetch schedule -t      Show tomorrow's schedule
   dlfetch schedule -w      Show this week as a timetable
@@ -50,6 +52,12 @@ def main():
     p_tasks.add_argument("-s", "--subject", type=str, dest="subject_code", metavar="CODE",
                          help="Filter tasks by subject code, e.g. EN203")
 
+    p_submit = sub.add_parser("submit", help="Upload files and submit a task")
+    p_submit.add_argument("task_id", type=int, help="Task ID to submit")
+    p_submit.add_argument("-f", "--file", type=str, nargs="+", dest="submit_files", metavar="FILE",
+                          help="File(s) to upload and attach")
+    p_submit.add_argument("-m", "--remark", type=str, help="Remark/comment for the submission")
+
     p_sched = sub.add_parser("schedule", help="View daily or weekly class schedule")
     date_group = p_sched.add_mutually_exclusive_group()
     date_group.add_argument("-t", "--tomorrow", action="store_true", help="Show tomorrow's schedule")
@@ -71,6 +79,7 @@ def main():
         "schedule": cmd_schedule,
         "gpa": cmd_gpa,
         "list": cmd_list,
+        "submit": cmd_submit,
     }
 
     if args.command:

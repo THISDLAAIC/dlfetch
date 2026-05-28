@@ -1,8 +1,98 @@
+import os
+
 import requests
 
 from session import get_session, get_current_semester
 from constants import headers, BLUE, RESET, GREEN, YELLOW, CYAN
 from utils import parse_date_string
+
+
+def upload_file(file_path, cookies):
+    if not os.path.exists(file_path):
+        print(f"  File not found: {file_path}")
+        return None
+
+    filename = os.path.basename(file_path)
+    ext = os.path.splitext(filename)[1].lower()
+    mime_types = {
+        ".pdf": "application/pdf",
+        ".doc": "application/msword",
+        ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png",
+        ".gif": "image/gif",
+        ".zip": "application/zip",
+        ".txt": "text/plain",
+        ".ppt": "application/vnd.ms-powerpoint",
+        ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    }
+    content_type = mime_types.get(ext, "application/octet-stream")
+    file_size = os.path.getsize(file_path)
+
+    with open(file_path, "rb") as f:
+        r = requests.post(
+            "https://thisdlstu.schoolis.cn/api/LearningTask/UploadDocument",
+            headers={"User-Agent": "DLFetch"},
+            cookies=cookies,
+            files={"fileBase": (filename, f, content_type)}
+        )
+
+    data = r.json()
+    if data["state"] != 0:
+        print(f"  Upload failed: {data.get('msgCN') or data.get('msg')}")
+        return None
+
+    doc = data["data"]
+    print(f"  Uploaded: {GREEN}{filename}{RESET} ({file_size // 1024}KB)")
+    return {
+        "id": doc["id"],
+        "type": ext,
+        "size": file_size,
+        "name": filename,
+        "url": doc["url"],
+        "sort": doc.get("sort", 0),
+        "finaltype": doc.get("finaltype", ext.lstrip(".")),
+    }
+
+
+def cmd_submit(args):
+    cookies = {"SessionId": get_session()}
+
+    if not args.submit_files and not args.remark:
+        print("  Use: dlfetch submit <ID> -f <file> [-m remark]")
+        return
+
+    task_id = args.task_id
+    print(f"\n📤 {BLUE}Submitting task {task_id}{RESET}")
+    print(f"{'─' * 40}")
+
+    uploaded_docs = []
+    if args.submit_files:
+        for fp in args.submit_files:
+            doc = upload_file(fp, cookies)
+            if doc:
+                uploaded_docs.append(doc)
+            else:
+                print(f"  Skipping failed upload: {fp}")
+
+    payload = {
+        "learningTaskId": task_id,
+        "remark": args.remark or "",
+        "learningTaskStudentDocuments": uploaded_docs,
+    }
+
+    r = requests.post(
+        "https://thisdlstu.schoolis.cn/api/LearningTask/Save",
+        headers={**headers, "Content-Type": "application/json"},
+        cookies=cookies,
+        json=payload,
+    ).json()
+
+    if r["state"] == 0:
+        print(f"\n  {GREEN}✅ Submitted successfully!{RESET}")
+    else:
+        print(f"\n  {YELLOW}Submit failed: {r.get('msgCN') or r.get('msg')}{RESET}")
 
 
 def cmd_tasks(args):
