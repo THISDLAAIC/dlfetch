@@ -36,17 +36,66 @@ def print_evaluation(project, indent=2, mapping=None):
         print_evaluation(sub, indent + 4, mapping)
 
 
+def gpa_color(gpa):
+    if gpa >= 4.0:
+        return GREEN
+    elif gpa >= 3.0:
+        return YELLOW
+    return CYAN
+
+
+def print_subject_detail(s, mappings, semester_id, cookies):
+    score = s["subjectScore"]
+    mapping_id = s["scoreMappingId"]
+    mapping = mappings.get(mapping_id)
+    name = s["subjectEName"] or s["subjectName"]
+    class_id = s["classId"]
+    subject_id = s["subjectId"]
+
+    if score is None or not mapping:
+        print(f"\n  {BLUE}{name}{RESET}  No score data")
+        return
+
+    grade, gpa = get_grade(score, mapping)
+    print(f"\n  {BLUE}{name}{RESET}  {score:.1f}  {grade}  {gpa_color(gpa)}{gpa:.2f}{RESET}")
+    print(f"  {'─' * 56}")
+
+    detail_resp = requests.get(
+        f"https://thisdlstu.schoolis.cn/api/DynamicScore/GetDynamicScoreDetail?classId={class_id}&subjectId={subject_id}&semesterId={semester_id}",
+        headers=headers, cookies=cookies
+    ).json()["data"]
+
+    for proj in detail_resp.get("evaluationProjectList", []):
+        print_evaluation(proj, indent=4, mapping=mapping)
+
+
 def cmd_gpa(args):
     cookies = {"SessionId": get_session()}
     current_semester = get_current_semester(cookies)
     semester_id = current_semester["id"]
+
+    if args.subcmd == "list":
+        subjects = requests.get(
+            f"https://thisdlstu.schoolis.cn/api/LearningTask/GetStuSubjectListForSelect?semesterId={semester_id}",
+            headers=headers, cookies=cookies
+        ).json()["data"]
+
+        print(f"\n📚 {BLUE}Subjects{RESET} — {current_semester['name']}")
+        print(f"{'─' * 60}")
+        print(f"  {'ID':<8} {'Code':<8} {'Subject'}")
+        print(f"  {'─' * 56}")
+        for s in subjects:
+            name = s["eName"] or s["name"]
+            print(f"  {CYAN}{s['id']:<8}{RESET} {s['subjectCode']:<8} {name}")
+        print(f"\n  Use: dlfetch gpa -d -s <ID>  to view subject details")
+        return
 
     resp = requests.get(
         f"https://thisdlstu.schoolis.cn/api/DynamicScore/GetStuSemesterDynamicScore?semesterId={semester_id}",
         headers=headers, cookies=cookies
     ).json()["data"]
 
-    subjects = resp["studentSemesterDynamicScoreBasicDtos"]
+    subjects_data = resp["studentSemesterDynamicScoreBasicDtos"]
     mappings = {m["scoresMappingId"]: m for m in resp["scoreMappingList"]}
 
     overall_gpa = requests.get(
@@ -54,38 +103,21 @@ def cmd_gpa(args):
         headers=headers, cookies=cookies
     ).json()["data"]
 
-    sorted_subjects = sorted(subjects, key=lambda x: x["subjectName"])
+    if args.subject_ids:
+        target_ids = set(args.subject_ids)
+        for s in subjects_data:
+            if s["subjectId"] in target_ids:
+                print_subject_detail(s, mappings, semester_id, cookies)
+                target_ids.discard(s["subjectId"])
+        for missing_id in target_ids:
+            print(f"\n  Subject ID {CYAN}{missing_id}{RESET} not found in current semester")
+        return
+
+    sorted_subjects = sorted(subjects_data, key=lambda x: x["subjectName"])
 
     if args.detail:
         for s in sorted_subjects:
-            score = s["subjectScore"]
-            mapping_id = s["scoreMappingId"]
-            mapping = mappings.get(mapping_id)
-            name = s["subjectEName"] or s["subjectName"]
-            class_id = s["classId"]
-            subject_id = s["subjectId"]
-
-            if score is None or not mapping:
-                continue
-
-            grade, gpa = get_grade(score, mapping)
-            if gpa >= 4.0:
-                gpa_str = f"{GREEN}{gpa:.2f}{RESET}"
-            elif gpa >= 3.0:
-                gpa_str = f"{YELLOW}{gpa:.2f}{RESET}"
-            else:
-                gpa_str = f"{CYAN}{gpa:.2f}{RESET}"
-
-            print(f"\n  {BLUE}{name}{RESET}  {score:.1f}  {grade}  {gpa_str}")
-            print(f"  {'─' * 56}")
-
-            detail_resp = requests.get(
-                f"https://thisdlstu.schoolis.cn/api/DynamicScore/GetDynamicScoreDetail?classId={class_id}&subjectId={subject_id}&semesterId={semester_id}",
-                headers=headers, cookies=cookies
-            ).json()["data"]
-
-            for proj in detail_resp.get("evaluationProjectList", []):
-                print_evaluation(proj, indent=4, mapping=mapping)
+            print_subject_detail(s, mappings, semester_id, cookies)
 
         print(f"\n  {'═' * 56}")
         print(f"  {'Overall GPA:':<42} {GREEN}{overall_gpa}{RESET}")
@@ -105,15 +137,7 @@ def cmd_gpa(args):
                 continue
 
             grade, gpa = get_grade(score, mapping)
-
-            if gpa >= 4.0:
-                gpa_str = f"{GREEN}{gpa:.2f}{RESET}"
-            elif gpa >= 3.0:
-                gpa_str = f"{YELLOW}{gpa:.2f}{RESET}"
-            else:
-                gpa_str = f"{CYAN}{gpa:.2f}{RESET}"
-
-            print(f"  {name:<28} {score:>6.1f}  {grade:>5}  {gpa_str}")
+            print(f"  {name:<28} {score:>6.1f}  {grade:>5}  {gpa_color(gpa)}{gpa:.2f}")
 
         print(f"  {'─' * 50}")
         print(f"  {'Overall':<28} {'':>6}  {'':>5}  {GREEN}{overall_gpa}{RESET}")
