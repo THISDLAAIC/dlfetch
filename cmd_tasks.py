@@ -97,8 +97,19 @@ def cmd_tasks(args):
     print(f"\n📋 {BLUE}Learning Tasks{RESET}{title} ({current_semester['name']})")
     print(f"{'─' * 40}")
 
+    if finished and not args.pending:
+        print(f"{GREEN}✅ Handed in:{RESET}")
+        for t in finished:
+            score_str = ""
+            if t.get('score') is not None and t.get('totalScore'):
+                score_str = f" ({t['score']}/{t['totalScore']})"
+            print(f"  [{t['id']}] {t['name']}{score_str}")
+            if t.get('subjectName') and not subject_id:
+                print(f"    Subject: {t['subjectName']}")
+            print()
+
     if unfinished:
-        print(f"\n{YELLOW}⏳ Not handed in:{RESET}")
+        print(f"{YELLOW}⏳ Not handed in:{RESET}")
         for t in unfinished:
             print(f"  [{t['id']}] {t['name']}")
             if t.get('subjectName') and not subject_id:
