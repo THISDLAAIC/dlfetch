@@ -74,22 +74,6 @@ def cmd_gpa(args):
     current_semester = get_current_semester(cookies)
     semester_id = current_semester["id"]
 
-    if args.subcmd == "list":
-        subjects = requests.get(
-            f"https://thisdlstu.schoolis.cn/api/LearningTask/GetStuSubjectListForSelect?semesterId={semester_id}",
-            headers=headers, cookies=cookies
-        ).json()["data"]
-
-        print(f"\n📚 {BLUE}Subjects{RESET} — {current_semester['name']}")
-        print(f"{'─' * 60}")
-        print(f"  {'ID':<8} {'Code':<8} {'Subject'}")
-        print(f"  {'─' * 56}")
-        for s in subjects:
-            name = s["eName"] or s["name"]
-            print(f"  {CYAN}{s['id']:<8}{RESET} {s['subjectCode']:<8} {name}")
-        print(f"\n  Use: dlfetch gpa -s <CODE> or dlfetch gpa -i <ID>")
-        return
-
     resp = requests.get(
         f"https://thisdlstu.schoolis.cn/api/DynamicScore/GetStuSemesterDynamicScore?semesterId={semester_id}",
         headers=headers, cookies=cookies

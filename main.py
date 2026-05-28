@@ -6,6 +6,7 @@ from cmd_info import cmd_info
 from cmd_tasks import cmd_tasks
 from cmd_schedule import cmd_schedule
 from cmd_gpa import cmd_gpa
+from cmd_list import cmd_list
 
 EPILOG = """\
 examples:
@@ -20,7 +21,7 @@ examples:
                            Show schedule for a specific date
   dlfetch gpa              Show current semester GPA
   dlfetch gpa -d           Show GPA with detailed breakdown per subject
-  dlfetch gpa list         List all subjects with their codes and IDs
+  dlfetch list             List all subjects with their codes and IDs
   dlfetch gpa -s MAE01     Show detail by subject code
   dlfetch gpa -s MAE01 SCE24
                            Show detail for multiple subjects by code
@@ -38,6 +39,7 @@ def main():
     sub = parser.add_subparsers(dest="command", metavar="")
 
     sub.add_parser("info", help="Neofetch-style semester overview (default)")
+    sub.add_parser("list", help="List all subjects with their codes and IDs")
 
     p_tasks = sub.add_parser("tasks", help="List learning tasks with scores and deadlines")
     p_tasks.add_argument("-p", "--pending", action="store_true", help="Show only unfinished tasks")
@@ -54,8 +56,7 @@ def main():
     p_gpa.add_argument("-s", "--subject", type=str, nargs="+", dest="subject_codes", metavar="CODE",
                        help="Show detail for subject code(s), e.g. MAE01 SCE24")
     p_gpa.add_argument("-i", "--id", type=int, nargs="+", dest="subject_ids", metavar="ID",
-                       help="Show detail for subject ID(s) (use 'gpa list' to see IDs)")
-    p_gpa.add_argument("subcmd", nargs="?", choices=["list"], help="List available subjects with IDs")
+                       help="Show detail for subject ID(s) (use 'list' to see IDs)")
 
     args = parser.parse_args()
 
@@ -64,6 +65,7 @@ def main():
         "tasks": cmd_tasks,
         "schedule": cmd_schedule,
         "gpa": cmd_gpa,
+        "list": cmd_list,
     }
 
     if args.command:
