@@ -122,15 +122,4 @@ def cmd_tasks(args):
                     print(f"    Deadline: {end_dt.strftime('%Y-%m-%d %H:%M')}")
             print()
 
-    if finished and not args.pending:
-        print(f"{GREEN}✅ Handed in:{RESET}")
-        for t in finished:
-            score_str = ""
-            if t.get('score') is not None and t.get('totalScore'):
-                score_str = f" ({t['score']}/{t['totalScore']})"
-            print(f"  [{t['id']}] {t['name']}{score_str}")
-            if t.get('subjectName') and not subject_id:
-                print(f"    Subject: {t['subjectName']}")
-            print()
-
     print(f"Total: {len(tasks)} | {GREEN}Done: {len(finished)}{RESET} | {YELLOW}Pending: {len(unfinished)}{RESET}")
