@@ -12,7 +12,9 @@ EPILOG = """\
 examples:
   dlfetch                  Default neofetch-style overview
   dlfetch tasks            Show all recent tasks with scores
+  dlfetch tasks 2273775    Show detail for a specific task by ID
   dlfetch tasks -p         Show only unfinished tasks
+  dlfetch tasks -s EN203   Filter tasks by subject code
   dlfetch tasks -l 20      Fetch the last 20 tasks
   dlfetch schedule         Show today's schedule
   dlfetch schedule -t      Show tomorrow's schedule
@@ -42,8 +44,11 @@ def main():
     sub.add_parser("list", help="List all subjects with their codes and IDs")
 
     p_tasks = sub.add_parser("tasks", help="List learning tasks with scores and deadlines")
+    p_tasks.add_argument("task_id", nargs="?", type=int, help="Show detail for a specific task by ID")
     p_tasks.add_argument("-p", "--pending", action="store_true", help="Show only unfinished tasks")
     p_tasks.add_argument("-l", "--limit", type=int, metavar="N", help="Max number of tasks to fetch (default: 50)")
+    p_tasks.add_argument("-s", "--subject", type=str, dest="subject_code", metavar="CODE",
+                         help="Filter tasks by subject code, e.g. EN203")
 
     p_sched = sub.add_parser("schedule", help="View daily or weekly class schedule")
     date_group = p_sched.add_mutually_exclusive_group()

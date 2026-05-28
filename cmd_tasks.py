@@ -1,7 +1,7 @@
 import requests
 
 from session import get_session, get_current_semester
-from constants import headers, BLUE, RESET, GREEN, YELLOW
+from constants import headers, BLUE, RESET, GREEN, YELLOW, CYAN
 from utils import parse_date_string
 
 
@@ -10,9 +10,80 @@ def cmd_tasks(args):
     current_semester = get_current_semester(cookies)
     semester_id = current_semester["id"]
 
+    if args.task_id:
+        r = requests.get(
+            f"https://thisdlstu.schoolis.cn/api/LearningTask/GetDetail?learningTaskId={args.task_id}",
+            headers=headers, cookies=cookies
+        ).json()
+        if r["state"] != 0:
+            print(f"  Task not found or access denied")
+            return
+        t = r["data"]
+
+        name = t["learningTaskName"]
+        subject = t["subjectEName"] or t["subjectName"]
+        task_type = t["learningTaskTypeEName"] or t["learningTaskTypeName"]
+        score = t.get("score")
+        total = t.get("totalScore")
+        class_avg = t.get("classAvgScore")
+        class_max = t.get("classMaxScore")
+        finished = t["finishState"]
+        comment = t.get("comment") or t.get("remark") or ""
+        attachments = t.get("learningTaskDocuments", [])
+        eva = t.get("evaProjects", [])
+
+        status = f"{GREEN}Done{RESET}" if finished else f"{YELLOW}Pending{RESET}"
+
+        print(f"\n📄 {BLUE}{name}{RESET}")
+        print(f"{'─' * 50}")
+        print(f"  Subject   : {subject}")
+        print(f"  Type      : {task_type}")
+        print(f"  Status    : {status}")
+
+        if score is not None and total:
+            print(f"  Score     : {GREEN}{score}{RESET} / {total}")
+        if class_avg is not None:
+            print(f"  Class Avg : {class_avg}")
+        if class_max is not None:
+            print(f"  Class Max : {class_max}")
+
+        if eva:
+            parts = [f"{e['eName'] or e['name']} ({e['proportion']:.0f}%)" for e in eva]
+            print(f"  Category  : {', '.join(parts)}")
+
+        if comment:
+            print(f"  Comment   : {comment}")
+
+        if attachments:
+            print(f"  Attachments:")
+            for a in attachments:
+                size_kb = a["size"] / 1024
+                print(f"    · {a['name']} ({a['type']}, {size_kb:.0f}KB)")
+        return
+
     page_size = args.limit if args.limit else 50
+    subject_id = None
+
+    if args.subject_code:
+        subject_list = requests.get(
+            f"https://thisdlstu.schoolis.cn/api/LearningTask/GetStuSubjectListForSelect?semesterId={semester_id}",
+            headers=headers, cookies=cookies
+        ).json()["data"]
+        code_map = {s["subjectCode"].upper(): s["id"] for s in subject_list}
+        subject_id = code_map.get(args.subject_code.upper())
+        if not subject_id:
+            print(f"  Subject code {CYAN}{args.subject_code}{RESET} not found")
+            return
+
+    begin = current_semester.get("beginDate", "2026-01-01")[:10]
+    end = current_semester.get("endDate", "2026-12-31")[:10]
+
+    params = f"semesterId={semester_id}&pageIndex=1&pageSize={page_size}&beginTime={begin}&endTime={end}&key=&typeId=null&mode=null"
+    if subject_id:
+        params += f"&subjectId={subject_id}"
+
     tasks = requests.get(
-        f"https://thisdlstu.schoolis.cn/api/LearningTask/GetList?semesterId={semester_id}&pageIndex=1&pageSize={page_size}",
+        f"https://thisdlstu.schoolis.cn/api/LearningTask/GetList?{params}",
         headers=headers, cookies=cookies
     ).json()["data"]["list"]
 
@@ -22,21 +93,22 @@ def cmd_tasks(args):
     unfinished = [t for t in tasks if not t["finishState"]]
     finished = [t for t in tasks if t["finishState"]]
 
-    print(f"\n📋 {BLUE}Learning Tasks{RESET} ({current_semester['name']})")
+    title = f" ({args.subject_code.upper()})" if args.subject_code else ""
+    print(f"\n📋 {BLUE}Learning Tasks{RESET}{title} ({current_semester['name']})")
     print(f"{'─' * 40}")
 
     if unfinished:
         print(f"\n{YELLOW}⏳ Not handed in:{RESET}")
         for t in unfinished:
-            print(f"  • {t['name']}")
-            if t.get('subjectName'):
+            print(f"  [{t['id']}] {t['name']}")
+            if t.get('subjectName') and not subject_id:
                 print(f"    Subject: {t['subjectName']} ({t.get('subjectCode', '')})")
             if t.get('typeName'):
                 print(f"    Type: {t['typeName']}")
             if t.get('endTime'):
-                end = parse_date_string(t['endTime'])
-                if end:
-                    print(f"    Deadline: {end.strftime('%Y-%m-%d %H:%M')}")
+                end_dt = parse_date_string(t['endTime'])
+                if end_dt:
+                    print(f"    Deadline: {end_dt.strftime('%Y-%m-%d %H:%M')}")
             print()
 
     if finished and not args.pending:
@@ -45,8 +117,8 @@ def cmd_tasks(args):
             score_str = ""
             if t.get('score') is not None and t.get('totalScore'):
                 score_str = f" ({t['score']}/{t['totalScore']})"
-            print(f"  • {t['name']}{score_str}")
-            if t.get('subjectName'):
+            print(f"  [{t['id']}] {t['name']}{score_str}")
+            if t.get('subjectName') and not subject_id:
                 print(f"    Subject: {t['subjectName']}")
             print()
 
