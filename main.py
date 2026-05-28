@@ -20,9 +20,9 @@ examples:
                            Show schedule for a specific date
   dlfetch gpa              Show current semester GPA
   dlfetch gpa -d           Show GPA with detailed breakdown per subject
-  dlfetch gpa list         List all subjects with their IDs
-  dlfetch gpa -s 189741    Show detail for Honors Pre-Calculus
-  dlfetch gpa -s 189741 131604
+  dlfetch gpa list         List all subjects with their codes
+  dlfetch gpa -s MAE01     Show detail for Honors Pre-Calculus
+  dlfetch gpa -s MAE01 SCE24
                            Show detail for multiple subjects
 """
 
@@ -50,8 +50,8 @@ def main():
 
     p_gpa = sub.add_parser("gpa", help="Show current semester GPA")
     p_gpa.add_argument("-d", "--detail", action="store_true", help="Show detailed breakdown per subject")
-    p_gpa.add_argument("-s", "--subject", type=int, nargs="+", dest="subject_ids", metavar="ID",
-                       help="Show detail for specific subject ID(s) (use 'gpa list' to see IDs)")
+    p_gpa.add_argument("-s", "--subject", type=str, nargs="+", dest="subject_codes", metavar="CODE",
+                       help="Show detail for specific subject code(s), e.g. MAE01 SCE24 (use 'gpa list' to see codes)")
     p_gpa.add_argument("subcmd", nargs="?", choices=["list"], help="List available subjects with IDs")
 
     args = parser.parse_args()

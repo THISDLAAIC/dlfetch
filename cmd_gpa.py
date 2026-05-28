@@ -87,7 +87,7 @@ def cmd_gpa(args):
         for s in subjects:
             name = s["eName"] or s["name"]
             print(f"  {CYAN}{s['id']:<8}{RESET} {s['subjectCode']:<8} {name}")
-        print(f"\n  Use: dlfetch gpa -d -s <ID>  to view subject details")
+        print(f"\n  Use: dlfetch gpa -s <CODE>  to view subject details")
         return
 
     resp = requests.get(
@@ -103,14 +103,23 @@ def cmd_gpa(args):
         headers=headers, cookies=cookies
     ).json()["data"]
 
-    if args.subject_ids:
-        target_ids = set(args.subject_ids)
+    if args.subject_codes:
+        subject_list = requests.get(
+            f"https://thisdlstu.schoolis.cn/api/LearningTask/GetStuSubjectListForSelect?semesterId={semester_id}",
+            headers=headers, cookies=cookies
+        ).json()["data"]
+        code_to_id = {s["subjectCode"].upper(): s["id"] for s in subject_list}
+
+        target_codes = {c.upper() for c in args.subject_codes}
+        found = set()
         for s in subjects_data:
-            if s["subjectId"] in target_ids:
+            subject_id = s["subjectId"]
+            matched_code = next((c for c, sid in code_to_id.items() if sid == subject_id), None)
+            if matched_code and matched_code in target_codes:
                 print_subject_detail(s, mappings, semester_id, cookies)
-                target_ids.discard(s["subjectId"])
-        for missing_id in target_ids:
-            print(f"\n  Subject ID {CYAN}{missing_id}{RESET} not found in current semester")
+                found.add(matched_code)
+        for missing in target_codes - found:
+            print(f"\n  Subject code {CYAN}{missing}{RESET} not found in current semester")
         return
 
     sorted_subjects = sorted(subjects_data, key=lambda x: x["subjectName"])
