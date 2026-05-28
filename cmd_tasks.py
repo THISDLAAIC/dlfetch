@@ -59,6 +59,7 @@ def cmd_tasks(args):
             for a in attachments:
                 size_kb = a["size"] / 1024
                 print(f"    · {a['name']} ({a['type']}, {size_kb:.0f}KB)")
+                print(f"      {a['url']}")
         return
 
     page_size = args.limit if args.limit else 50
