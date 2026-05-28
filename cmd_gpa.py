@@ -87,7 +87,7 @@ def cmd_gpa(args):
         for s in subjects:
             name = s["eName"] or s["name"]
             print(f"  {CYAN}{s['id']:<8}{RESET} {s['subjectCode']:<8} {name}")
-        print(f"\n  Use: dlfetch gpa -s <CODE>  to view subject details")
+        print(f"\n  Use: dlfetch gpa -s <CODE> or dlfetch gpa -i <ID>")
         return
 
     resp = requests.get(
@@ -120,6 +120,17 @@ def cmd_gpa(args):
                 found.add(matched_code)
         for missing in target_codes - found:
             print(f"\n  Subject code {CYAN}{missing}{RESET} not found in current semester")
+        return
+
+    if args.subject_ids:
+        target_ids = set(args.subject_ids)
+        found = set()
+        for s in subjects_data:
+            if s["subjectId"] in target_ids:
+                print_subject_detail(s, mappings, semester_id, cookies)
+                found.add(s["subjectId"])
+        for missing_id in target_ids - found:
+            print(f"\n  Subject ID {CYAN}{missing_id}{RESET} not found in current semester")
         return
 
     sorted_subjects = sorted(subjects_data, key=lambda x: x["subjectName"])
