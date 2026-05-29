@@ -127,9 +127,9 @@ def cmd_gpa(args):
         print(f"  {'Overall GPA:':<42} {GREEN}{overall_gpa}{RESET}")
     else:
         print(f"\n🎓 {BLUE}GPA{RESET} — {current_semester['name']}")
-        print(f"{'─' * 58}")
-        print(f"  {'Subject':<38} {'Score':>6}  {'Grade':>5}  {'GPA':>4}")
-        print(f"  {'─' * 60}")
+        print(f"  {'─' * 56}")
+        print(f"  {'Subject':<36} {'Score':>6}  {'Grade':>5}  {'GPA':>4}")
+        print(f"  {'─' * 56}")
 
         for s in sorted_subjects:
             score = s["subjectScore"]
@@ -141,7 +141,7 @@ def cmd_gpa(args):
                 continue
 
             grade, gpa = get_grade(score, mapping)
-            print(f"  {name:<38} {score:>6.1f}  {grade:>5}  {gpa_color(gpa)}{gpa:.2f}{RESET}")
+            print(f"  {name:<36} {score:>6.1f}  {grade:>5}  {gpa_color(gpa)}{gpa:.2f}{RESET}")
 
-        print(f"  {'─' * 60}")
-        print(f"  {'Overall':<38} {'':>6}  {'':>5}  {GREEN}{overall_gpa}{RESET}")
+        print(f"  {'─' * 56}")
+        print(f"  {'Overall':<36} {'':>6}  {'':>5}  {GREEN}{overall_gpa}{RESET}")
