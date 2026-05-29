@@ -58,7 +58,6 @@ def print_subject_detail(s, mappings, semester_id, cookies):
 
     grade, gpa = get_grade(score, mapping)
     print(f"\n{BLUE}{name}{RESET}  {score:.1f}  {grade}  {gpa_color(gpa)}{gpa:.2f}{RESET}")
-    print(f"{'─' * 56}")
 
     detail_resp = requests.get(
         f"https://thisdlstu.schoolis.cn/api/DynamicScore/GetDynamicScoreDetail?classId={class_id}&subjectId={subject_id}&semesterId={semester_id}",
@@ -123,7 +122,7 @@ def cmd_gpa(args):
         for s in sorted_subjects:
             print_subject_detail(s, mappings, semester_id, cookies)
 
-        print(f"\n{'═' * 56}")
+        print(f"\n{'=' * 56}")
         print(f"{'Overall GPA:':<42} {GREEN}{overall_gpa}{RESET}")
     else:
         print(f"\n🎓 {BLUE}GPA{RESET} — {current_semester['name']}")
