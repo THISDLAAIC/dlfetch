@@ -141,7 +141,7 @@ def cmd_gpa(args):
                 continue
 
             grade, gpa = get_grade(score, mapping)
-            print(f"  {name:<28} {score:>6.1f}  {grade:>5}  {gpa_color(gpa)}{gpa:.2f}")
+            print(f"  {name:<28} {score:>6.1f}  {grade:>5}  {gpa_color(gpa)}{gpa:.2f}{RESET}")
 
         print(f"  {'─' * 50}")
         print(f"  {'Overall':<28} {'':>6}  {'':>5}  {GREEN}{overall_gpa}{RESET}")
