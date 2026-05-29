@@ -2,7 +2,7 @@
 > A neofetch-style CLI tool to fetch data from the xiaobao system of THISDL.
 ---
 ## Demonstration
-[![asciicast](https://asciinema.org/a/8ZBfi32rtrvu7j6rKgNyY4DwK.svg)](https://asciinema.org/a/8ZBfi32rtrvu7j6rKgNyY4DwK)
+[![asciicast](https://asciinema.org/a/b8ycNjzS3Zm2MIii.svg)](https://asciinema.org/a/b8ycNjzS3Zm2MIii)
 ---
 ## Installation
 ### 1. Install dlfetch
