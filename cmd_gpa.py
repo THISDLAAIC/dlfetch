@@ -53,12 +53,12 @@ def print_subject_detail(s, mappings, semester_id, cookies):
     subject_id = s["subjectId"]
 
     if score is None or not mapping:
-        print(f"\n  {BLUE}{name}{RESET}  No score data")
+        print(f"\n{BLUE}{name}{RESET}  No score data")
         return
 
     grade, gpa = get_grade(score, mapping)
-    print(f"\n  {BLUE}{name}{RESET}  {score:.1f}  {grade}  {gpa_color(gpa)}{gpa:.2f}{RESET}")
-    print(f"  {'─' * 56}")
+    print(f"\n{BLUE}{name}{RESET}  {score:.1f}  {grade}  {gpa_color(gpa)}{gpa:.2f}{RESET}")
+    print(f"{'─' * 56}")
 
     detail_resp = requests.get(
         f"https://thisdlstu.schoolis.cn/api/DynamicScore/GetDynamicScoreDetail?classId={class_id}&subjectId={subject_id}&semesterId={semester_id}",
@@ -103,7 +103,7 @@ def cmd_gpa(args):
                 print_subject_detail(s, mappings, semester_id, cookies)
                 found.add(matched_code)
         for missing in target_codes - found:
-            print(f"\n  Subject code {CYAN}{missing}{RESET} not found in current semester")
+            print(f"\nSubject code {CYAN}{missing}{RESET} not found in current semester")
         return
 
     if args.subject_ids:
@@ -114,7 +114,7 @@ def cmd_gpa(args):
                 print_subject_detail(s, mappings, semester_id, cookies)
                 found.add(s["subjectId"])
         for missing_id in target_ids - found:
-            print(f"\n  Subject ID {CYAN}{missing_id}{RESET} not found in current semester")
+            print(f"\nSubject ID {CYAN}{missing_id}{RESET} not found in current semester")
         return
 
     sorted_subjects = sorted(subjects_data, key=lambda x: x["subjectName"])
@@ -123,13 +123,13 @@ def cmd_gpa(args):
         for s in sorted_subjects:
             print_subject_detail(s, mappings, semester_id, cookies)
 
-        print(f"\n  {'═' * 56}")
-        print(f"  {'Overall GPA:':<42} {GREEN}{overall_gpa}{RESET}")
+        print(f"\n{'═' * 56}")
+        print(f"{'Overall GPA:':<42} {GREEN}{overall_gpa}{RESET}")
     else:
         print(f"\n🎓 {BLUE}GPA{RESET} — {current_semester['name']}")
-        print(f"  {'─' * 56}")
-        print(f"  {'Subject':<36} {'Score':>6}  {'Grade':>5}  {'GPA':>4}")
-        print(f"  {'─' * 56}")
+        print(f"{'─' * 56}")
+        print(f"{'Subject':<36} {'Score':>6}  {'Grade':>5}  {'GPA':>4}")
+        print(f"{'─' * 56}")
 
         for s in sorted_subjects:
             score = s["subjectScore"]
@@ -141,7 +141,7 @@ def cmd_gpa(args):
                 continue
 
             grade, gpa = get_grade(score, mapping)
-            print(f"  {name:<36} {score:>6.1f}  {grade:>5}  {gpa_color(gpa)}{gpa:.2f}{RESET}")
+            print(f"{name:<36} {score:>6.1f}  {grade:>5}  {gpa_color(gpa)}{gpa:.2f}{RESET}")
 
-        print(f"  {'─' * 56}")
-        print(f"  {'Overall':<36} {'':>6}  {'':>5}  {GREEN}{overall_gpa}{RESET}")
+        print(f"{'─' * 56}")
+        print(f"{'Overall':<36} {'':>6}  {'':>5}  {GREEN}{overall_gpa}{RESET}")
