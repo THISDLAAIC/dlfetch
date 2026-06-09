@@ -46,11 +46,11 @@ def upload_file(file_path, cookies):
     doc = data["data"]
     print(f"  Uploaded: {GREEN}{filename}{RESET} ({file_size // 1024}KB)")
     return {
-        "id": doc["id"],
+        "id": doc.get("id") or doc.get("fileId"),
         "type": ext,
         "size": file_size,
         "name": filename,
-        "url": doc["url"],
+        "url": doc.get("url"),
         "sort": doc.get("sort", 0),
         "finaltype": doc.get("finaltype", ext.lstrip(".")),
     }
