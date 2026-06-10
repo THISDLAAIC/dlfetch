@@ -203,7 +203,7 @@ def cmd_tasks(args):
         task_state = t.get("learningTaskState")
         return task_state == 3
     
-    unfinished = [t for t in tasks if not is_task_done(t)]
+    unfinished = [t for t in tasks if not is_task_done(t) and not is_task_submitted(t)]
     submitted_pending = [t for t in tasks if not t["finishState"] and is_task_submitted(t)]
     finished = [t for t in tasks if t["finishState"]]
 
