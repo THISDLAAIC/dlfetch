@@ -44,4 +44,11 @@ def get_current_semester(cookies):
         headers=headers,
         cookies=cookies
     ).json().get("data")
-    return next(s for s in semesters if s["isNow"])
+    if not semesters:
+        print("Failed to fetch semesters; your session may be invalid. Run `dlfetch logout` and try again.")
+        exit(1)
+    current = next((s for s in semesters if s["isNow"]), None)
+    if not current:
+        print("No active semester found.")
+        exit(1)
+    return current

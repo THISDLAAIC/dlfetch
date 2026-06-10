@@ -4,7 +4,7 @@ import requests
 from constants import headers, errors
 from credentials import md5_upper, load_credentials, prompt_and_save, delete_credentials
 
-WRONG_CREDENTIALS_STATE = 1010076
+WRONG_CREDENTIALS_STATES = (1010076, 1010082)
 
 def password_hash(password_md5: str, timestamp: int):
     return md5_upper(password_md5 + str(timestamp))
@@ -43,16 +43,16 @@ def sign_in() -> str | None:
     )
 
     try:
-        if login_res.json()['data']:
+        res = login_res.json()
+        state = res['state']
+        if state == 0 and res.get('data'):
             print("Login successfully!")
             return session_id
-        else:
-            state = login_res.json()['state']
-            print(errors.get(state))
-            if state == WRONG_CREDENTIALS_STATE:
-                delete_credentials()
-                print("Saved credentials cleared. You will be asked to enter them again next time.")
-            return None
+        print(res.get('msgCN') or errors.get(state) or f"Login failed (state {state})")
+        if state in WRONG_CREDENTIALS_STATES:
+            delete_credentials()
+            print("Saved credentials cleared. You will be asked to enter them again next time.")
+        return None
     except (ValueError, KeyError):
         print('Unknown error')
         return None
