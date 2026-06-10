@@ -124,10 +124,16 @@ def cmd_tasks(args):
         eva = t.get("evaProjects", [])
 
         task_state = t.get("learningTaskState")
-        if finished:
-            status = f"{GREEN}Done{RESET}"
+        if task_state == 4:
+            status = f"{GREEN}Graded{RESET}"
+        elif task_state == 5:
+            status = f"{YELLOW}Grading{RESET}"
         elif task_state == 3:
             status = f"{CYAN}Submitted (pending grading){RESET}"
+        elif task_state == 2:
+            status = f"{YELLOW}Not submitted{RESET}"
+        elif finished:
+            status = f"{GREEN}Done{RESET}"
         else:
             status = f"{YELLOW}Pending{RESET}"
 
@@ -162,7 +168,7 @@ def cmd_tasks(args):
                 print(f"      {a['url']}")
         return
 
-    page_size = args.limit if args.limit else 50
+    page_size = args.limit if args.limit else 200
     subject_id = None
 
     if args.subject_code:
@@ -188,24 +194,28 @@ def cmd_tasks(args):
         headers=headers, cookies=cookies
     ).json()["data"]["list"]
 
-    if args.pending:
-        tasks = [t for t in tasks if not is_task_done(t)]
-
     def is_task_done(t):
-        if t["finishState"]:
-            return True
+        """Check if task is graded (learningTaskState == 4)"""
         task_state = t.get("learningTaskState")
         return task_state == 4
     
     def is_task_submitted(t):
-        if t["finishState"]:
-            return True
+        """Check if task is submitted (learningTaskState == 3 or 5)"""
         task_state = t.get("learningTaskState")
-        return task_state == 3
+        return task_state in (3, 5)
+    
+    def is_task_grading(t):
+        """Check if task is being graded (learningTaskState == 5)"""
+        task_state = t.get("learningTaskState")
+        return task_state == 5
+    
+    if args.pending:
+        tasks = [t for t in tasks if not is_task_done(t) and not is_task_grading(t)]
     
     unfinished = [t for t in tasks if not is_task_done(t) and not is_task_submitted(t)]
-    submitted_pending = [t for t in tasks if not t["finishState"] and is_task_submitted(t)]
-    finished = [t for t in tasks if t["finishState"]]
+    submitted_pending = [t for t in tasks if not is_task_done(t) and is_task_submitted(t) and not is_task_grading(t)]
+    grading = [t for t in tasks if is_task_grading(t)]
+    finished = [t for t in tasks if is_task_done(t)]
 
     title = f" ({args.subject_code.upper()})" if args.subject_code else ""
     print(f"\n📋 {BLUE}Learning Tasks{RESET}{title} ({current_semester['name']})")
@@ -217,9 +227,27 @@ def cmd_tasks(args):
             score_str = ""
             if t.get('score') is not None and t.get('totalScore'):
                 score_str = f" ({t['score']}/{t['totalScore']})"
+            elif t.get('levelString'):
+                score_str = f" ({t['levelString']})"
             print(f"  [{t['id']}] {t['name']}{score_str}")
             if t.get('subjectName') and not subject_id:
                 print(f"    Subject: {t['subjectName']}")
+
+    if grading and not args.pending:
+        print(f"{YELLOW}📝 Grading:{RESET}")
+        for t in grading:
+            score_str = ""
+            if t.get('score') is not None and t.get('totalScore'):
+                score_str = f" ({t['score']}/{t['totalScore']})"
+            print(f"  [{t['id']}] {t['name']}{score_str}")
+            if t.get('subjectName') and not subject_id:
+                print(f"    Subject: {t['subjectName']} ({t.get('subjectCode', '')})")
+            if t.get('typeName'):
+                print(f"    Type: {t['typeName']}")
+            if t.get('endTime'):
+                end_dt = parse_date_string(t['endTime'])
+                if end_dt:
+                    print(f"    Deadline: {end_dt.strftime('%Y-%m-%d %H:%M')}")
 
     if submitted_pending and not args.pending:
         print(f"{CYAN}📤 Submitted (pending grading):{RESET}")
@@ -250,4 +278,4 @@ def cmd_tasks(args):
                 if end_dt:
                     print(f"    Deadline: {end_dt.strftime('%Y-%m-%d %H:%M')}")
 
-    print(f"Total: {len(tasks)} | {GREEN}Graded: {len(finished)}{RESET} | {CYAN}Pending: {len(submitted_pending)}{RESET} | {YELLOW}Not submitted: {len(unfinished)}{RESET}")
+    print(f"Total: {len(tasks)} | {GREEN}Graded: {len(finished)}{RESET} | {YELLOW}Grading: {len(grading)}{RESET} | {CYAN}Pending: {len(submitted_pending)}{RESET} | {YELLOW}Not submitted: {len(unfinished)}{RESET}")
