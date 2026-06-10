@@ -1,32 +1,22 @@
-import os
-
-from sys import exit
-import hashlib
 import time
 import requests
 
 from constants import headers, errors
+from credentials import md5_upper, load_credentials, prompt_and_save, delete_credentials
 
-def md5_upper(text: str) -> str:
-    return hashlib.md5(text.encode('utf-8')).hexdigest().upper()
+WRONG_CREDENTIALS_STATE = 1010076
 
-def password_hash(password: str, timestamp: int):
-
-    first = md5_upper(password)
-    final_hash = md5_upper(first + str(timestamp))
-
-    return final_hash
+def password_hash(password_md5: str, timestamp: int):
+    return md5_upper(password_md5 + str(timestamp))
 
 def sign_in() -> str | None:
-    user_name = os.environ.get('THISDL_USERNAME')
-    password = os.environ.get('THISDL_PASSWORD')
-
-    if not user_name or not password:
-        print('Please set environment variables THISDL_USERNAME and THISDL_PASSWORD')
-        exit(1)
+    saved = load_credentials()
+    if not saved:
+        saved = prompt_and_save()
+    user_name, password_md5 = saved
 
     timestamp = int(time.time())
-    hashed_password = password_hash(password, timestamp)
+    hashed_password = password_hash(password_md5, timestamp)
     try:
         session_id = requests.get(
             "https://thisdlstu.schoolis.cn/api/MemberShip/GetStudentCaptchaForLogin",
@@ -57,7 +47,11 @@ def sign_in() -> str | None:
             print("Login successfully!")
             return session_id
         else:
-            print(errors.get(login_res.json()['state']))
+            state = login_res.json()['state']
+            print(errors.get(state))
+            if state == WRONG_CREDENTIALS_STATE:
+                delete_credentials()
+                print("Saved credentials cleared. You will be asked to enter them again next time.")
             return None
     except (ValueError, KeyError):
         print('Unknown error')

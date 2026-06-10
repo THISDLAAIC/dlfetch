@@ -7,6 +7,7 @@ from cmd_tasks import cmd_tasks, cmd_submit
 from cmd_schedule import cmd_schedule
 from cmd_gpa import cmd_gpa
 from cmd_list import cmd_list
+from cmd_logout import cmd_logout
 
 EPILOG = """\
 examples:
@@ -30,6 +31,7 @@ examples:
   dlfetch gpa -s MAE01 SCE24
                            Show detail for multiple subjects by code
   dlfetch gpa -i 189741    Show detail by subject ID
+  dlfetch logout           Remove saved credentials and session
 """
 
 
@@ -71,6 +73,8 @@ def main():
     p_gpa.add_argument("-i", "--id", type=int, nargs="+", dest="subject_ids", metavar="ID",
                        help="Show detail for subject ID(s) (use 'list' to see IDs)")
 
+    sub.add_parser("logout", help="Remove saved credentials and session")
+
     args = parser.parse_args()
 
     commands = {
@@ -80,6 +84,7 @@ def main():
         "gpa": cmd_gpa,
         "list": cmd_list,
         "submit": cmd_submit,
+        "logout": cmd_logout,
     }
 
     if args.command:

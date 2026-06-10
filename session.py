@@ -28,12 +28,12 @@ def get_session():
     if not session_id:
         print("session_id is empty or expired! Trying to sign in...")
         session_id = sign_in()
-        with open(session_path, 'w') as session_file:
+        if not session_id:
+            print("Login failed.")
+            exit(1)
+        fd = os.open(session_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, 'w') as session_file:
             session_file.write(session_id)
-
-    if not session_id:
-        print("Login failed.")
-        exit(1)
 
     return session_id
 

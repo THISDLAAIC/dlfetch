@@ -9,6 +9,14 @@
 You can install it with a command `zsh <(curl -fsSL https://raw.githubusercontent.com/huangdihd/dlfetch/master/install.sh)`
 ### 2. Enjoy it!
 Use command `dlfetch` to fetch your data anywhere!
+
+On first run you will be asked for your username and password. The password is hashed
+immediately and stored in the system keyring (macOS Keychain / Windows Credential Manager /
+Linux Secret Service) — never written to disk in plain text. If no keyring is available
+(e.g. a headless Linux server), it falls back to `~/.dlfetch/credentials` with permission 0600.
+
+To reset saved credentials (e.g. after changing your password), run `dlfetch logout`,
+then run `dlfetch` again to re-enter them.
 ## Uninstallation
 You can uninstall it with a command `zsh <(curl -fsSL https://raw.githubusercontent.com/huangdihd/dlfetch/master/uninstall.sh)`
 ---
@@ -51,6 +59,10 @@ dlfetch gpa -s MAE01     Show detail for a subject by code
 dlfetch gpa -s MAE01 SCE24
                          Show detail for multiple subjects by code
 dlfetch gpa -i 189741    Show detail for a subject by ID
+```
+### Logout
+```
+dlfetch logout           Remove saved credentials and session
 ```
 ---
 **If you like this project, please give me a star!**

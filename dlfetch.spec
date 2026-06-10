@@ -6,7 +6,12 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[],
-    hiddenimports=[],
+    hiddenimports=[
+        'keyring.backends.macOS',
+        'keyring.backends.Windows',
+        'keyring.backends.SecretService',
+        'keyring.backends.chainer',
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
