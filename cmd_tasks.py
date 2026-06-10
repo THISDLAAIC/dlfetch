@@ -128,8 +128,6 @@ def cmd_tasks(args):
             status = f"{GREEN}Done{RESET}"
         elif task_state == 3:
             status = f"{CYAN}Submitted (pending grading){RESET}"
-        elif task_state == 2:
-            status = f"{CYAN}Submitted (pending grading){RESET}"
         else:
             status = f"{YELLOW}Pending{RESET}"
 
@@ -197,13 +195,13 @@ def cmd_tasks(args):
         if t["finishState"]:
             return True
         task_state = t.get("learningTaskState")
-        return task_state in (2, 3, 4)
+        return task_state == 4
     
     def is_task_submitted(t):
         if t["finishState"]:
             return True
         task_state = t.get("learningTaskState")
-        return task_state in (2, 3, 4)
+        return task_state == 3
     
     unfinished = [t for t in tasks if not is_task_done(t)]
     submitted_pending = [t for t in tasks if not t["finishState"] and is_task_submitted(t)]
