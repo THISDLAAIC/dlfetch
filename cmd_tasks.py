@@ -123,7 +123,15 @@ def cmd_tasks(args):
         attachments = t.get("learningTaskDocuments", [])
         eva = t.get("evaProjects", [])
 
-        status = f"{GREEN}Done{RESET}" if finished else f"{YELLOW}Pending{RESET}"
+        task_state = t.get("learningTaskState")
+        if finished:
+            status = f"{GREEN}Done{RESET}"
+        elif task_state == 3:
+            status = f"{CYAN}Submitted (pending grading){RESET}"
+        elif task_state == 2:
+            status = f"{CYAN}Submitted (pending grading){RESET}"
+        else:
+            status = f"{YELLOW}Pending{RESET}"
 
         print(f"\n📄 {BLUE}{name}{RESET}")
         print(f"{'─' * 50}")
@@ -183,9 +191,22 @@ def cmd_tasks(args):
     ).json()["data"]["list"]
 
     if args.pending:
-        tasks = [t for t in tasks if not t["finishState"]]
+        tasks = [t for t in tasks if not is_task_done(t)]
 
-    unfinished = [t for t in tasks if not t["finishState"]]
+    def is_task_done(t):
+        if t["finishState"]:
+            return True
+        task_state = t.get("learningTaskState")
+        return task_state in (2, 3, 4)
+    
+    def is_task_submitted(t):
+        if t["finishState"]:
+            return True
+        task_state = t.get("learningTaskState")
+        return task_state in (2, 3, 4)
+    
+    unfinished = [t for t in tasks if not is_task_done(t)]
+    submitted_pending = [t for t in tasks if not t["finishState"] and is_task_submitted(t)]
     finished = [t for t in tasks if t["finishState"]]
 
     title = f" ({args.subject_code.upper()})" if args.subject_code else ""
@@ -193,7 +214,7 @@ def cmd_tasks(args):
     print(f"{'─' * 40}")
 
     if finished and not args.pending:
-        print(f"{GREEN}✅ Handed in:{RESET}")
+        print(f"{GREEN}✅ Graded:{RESET}")
         for t in finished:
             score_str = ""
             if t.get('score') is not None and t.get('totalScore'):
@@ -202,8 +223,24 @@ def cmd_tasks(args):
             if t.get('subjectName') and not subject_id:
                 print(f"    Subject: {t['subjectName']}")
 
+    if submitted_pending and not args.pending:
+        print(f"{CYAN}📤 Submitted (pending grading):{RESET}")
+        for t in submitted_pending:
+            score_str = ""
+            if t.get('score') is not None and t.get('totalScore'):
+                score_str = f" ({t['score']}/{t['totalScore']})"
+            print(f"  [{t['id']}] {t['name']}{score_str}")
+            if t.get('subjectName') and not subject_id:
+                print(f"    Subject: {t['subjectName']} ({t.get('subjectCode', '')})")
+            if t.get('typeName'):
+                print(f"    Type: {t['typeName']}")
+            if t.get('endTime'):
+                end_dt = parse_date_string(t['endTime'])
+                if end_dt:
+                    print(f"    Deadline: {end_dt.strftime('%Y-%m-%d %H:%M')}")
+
     if unfinished:
-        print(f"{YELLOW}⏳ Not handed in:{RESET}")
+        print(f"{YELLOW}⏳ Not submitted:{RESET}")
         for t in unfinished:
             print(f"  [{t['id']}] {t['name']}")
             if t.get('subjectName') and not subject_id:
@@ -215,4 +252,4 @@ def cmd_tasks(args):
                 if end_dt:
                     print(f"    Deadline: {end_dt.strftime('%Y-%m-%d %H:%M')}")
 
-    print(f"Total: {len(tasks)} | {GREEN}Done: {len(finished)}{RESET} | {YELLOW}Pending: {len(unfinished)}{RESET}")
+    print(f"Total: {len(tasks)} | {GREEN}Graded: {len(finished)}{RESET} | {CYAN}Pending: {len(submitted_pending)}{RESET} | {YELLOW}Not submitted: {len(unfinished)}{RESET}")
