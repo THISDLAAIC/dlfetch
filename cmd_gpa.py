@@ -1,6 +1,6 @@
 import requests
 
-from session import get_session, get_current_semester
+from session import get_session, get_semesters
 from constants import headers, BLUE, RESET, GREEN, YELLOW, CYAN
 
 
@@ -68,10 +68,44 @@ def print_subject_detail(s, mappings, semester_id, cookies):
         print_evaluation(proj, indent=4, mapping=mapping)
 
 
+def resolve_semester(semesters, semester_arg):
+    if semester_arg.lower() == "list":
+        return "list", None
+    match = next((s for s in semesters if s["name"] == semester_arg), None)
+    if match:
+        return match["name"], match["id"]
+    # Try fuzzy match
+    matches = [s for s in semesters if semester_arg in s["name"]]
+    if len(matches) == 1:
+        return matches[0]["name"], matches[0]["id"]
+    return None, None
+
+
 def cmd_gpa(args):
     cookies = {"SessionId": get_session()}
-    current_semester = get_current_semester(cookies)
-    semester_id = current_semester["id"]
+    semesters = get_semesters(cookies)
+
+    if args.semester:
+        semester_name, semester_id = resolve_semester(semesters, args.semester)
+        if semester_id is None:
+            if semester_name == "list":
+                print(f"🎓 {BLUE}Available Semesters{RESET}")
+                print(f"{'─' * 56}")
+                for s in semesters:
+                    marker = " ← current" if s["isNow"] else ""
+                    print(f"  {s['name']}{marker}")
+                print(f"{'─' * 56}")
+                print(f"Use: dlfetch gpa -S '<semester name>'")
+                return
+            print(f"Semester '{args.semester}' not found. Use 'dlfetch gpa -S list' to see available semesters.")
+            return
+    else:
+        current = next((s for s in semesters if s["isNow"]), None)
+        if not current:
+            print("No active semester found.")
+            return
+        semester_name = current["name"]
+        semester_id = current["id"]
 
     resp = requests.get(
         f"https://thisdlstu.schoolis.cn/api/DynamicScore/GetStuSemesterDynamicScore?semesterId={semester_id}",
@@ -125,7 +159,7 @@ def cmd_gpa(args):
         print(f"{'=' * 56}")
         print(f"{'Overall GPA:':<42} {GREEN}{overall_gpa}{RESET}")
     else:
-        print(f"🎓 {BLUE}GPA{RESET} — {current_semester['name']}")
+        print(f"🎓 {BLUE}GPA{RESET} — {semester_name}")
         print(f"{'─' * 56}")
         print(f"{'Subject':<36} {'Score':>6}  {'Grade':>5}  {'GPA':>4}")
         print(f"{'─' * 56}")
