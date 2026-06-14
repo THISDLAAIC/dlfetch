@@ -54,6 +54,9 @@ dlfetch schedule -d 2026-06-01
 ### GPA
 ```
 dlfetch gpa              Show current semester GPA overview
+dlfetch gpa -S list      List all available semesters
+dlfetch gpa -S '2025-2026学年 第1学期'
+                         Show GPA for a specific semester
 dlfetch gpa -d           Show GPA with detailed breakdown per subject
 dlfetch gpa -s MAE01     Show detail for a subject by code
 dlfetch gpa -s MAE01 SCE24
