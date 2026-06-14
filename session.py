@@ -38,7 +38,7 @@ def get_session():
     return session_id
 
 
-def get_current_semester(cookies):
+def get_semesters(cookies):
     semesters = requests.get(
         "https://thisdlstu.schoolis.cn/api/School/GetSchoolSemesters",
         headers=headers,
@@ -47,6 +47,11 @@ def get_current_semester(cookies):
     if not semesters:
         print("Failed to fetch semesters; your session may be invalid. Run `dlfetch logout` and try again.")
         exit(1)
+    return semesters
+
+
+def get_current_semester(cookies):
+    semesters = get_semesters(cookies)
     current = next((s for s in semesters if s["isNow"]), None)
     if not current:
         print("No active semester found.")
