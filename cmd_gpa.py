@@ -1,6 +1,6 @@
 import requests
 
-from session import get_session, get_current_semester, get_semesters
+from session import get_session, get_semesters
 from constants import headers, BLUE, RESET, GREEN, YELLOW, CYAN
 
 
