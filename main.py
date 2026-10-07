@@ -37,6 +37,7 @@ examples:
                            Show detail for multiple subjects by code
   dlfetch gpa -i 189741    Show detail by subject ID
   dlfetch logout           Remove saved credentials and session
+  dlfetch mcp              Start the MCP server over stdio
 """
 
 
@@ -82,6 +83,7 @@ def main():
                        help="Show detail for subject ID(s) (use 'list' to see IDs)")
 
     sub.add_parser("logout", help="Remove saved credentials and session")
+    sub.add_parser("mcp", help="Start the MCP server over stdio")
 
     args = parser.parse_args()
 
@@ -94,6 +96,12 @@ def main():
         "submit": cmd_submit,
         "logout": cmd_logout,
     }
+
+    if args.command == "mcp":
+        from mcp_server import run_stdio_server
+
+        run_stdio_server()
+        return
 
     if args.command:
         commands[args.command](args)

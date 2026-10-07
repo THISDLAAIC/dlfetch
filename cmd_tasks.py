@@ -56,6 +56,28 @@ def upload_file(file_path, cookies):
     }
 
 
+def _print_task_item(t, subject_id, show_score=False, show_meta=True):
+    """Print a single task line with optional score and metadata."""
+    score_str = ""
+    if show_score:
+        if t.get("score") is not None and t.get("totalScore"):
+            score_str = f" ({t['score']}/{t['totalScore']})"
+        elif t.get("levelString"):
+            score_str = f" ({t['levelString']})"
+    print(f"  [{t['id']}] {t['name']}{score_str}")
+    if t.get("subjectName") and not subject_id:
+        code = t.get("subjectCode", "")
+        code_part = f" ({code})" if code else ""
+        print(f"    Subject: {t['subjectName']}{code_part}")
+    if show_meta:
+        if t.get("typeName"):
+            print(f"    Type: {t['typeName']}")
+        if t.get("endTime"):
+            end_dt = parse_date_string(t["endTime"])
+            if end_dt:
+                print(f"    Deadline: {end_dt.strftime('%Y-%m-%d %H:%M')}")
+
+
 def cmd_submit(args):
     cookies = {"SessionId": get_session()}
 
@@ -224,58 +246,21 @@ def cmd_tasks(args):
     if finished and not args.pending:
         print(f"{GREEN}✅ Graded:{RESET}")
         for t in finished:
-            score_str = ""
-            if t.get('score') is not None and t.get('totalScore'):
-                score_str = f" ({t['score']}/{t['totalScore']})"
-            elif t.get('levelString'):
-                score_str = f" ({t['levelString']})"
-            print(f"  [{t['id']}] {t['name']}{score_str}")
-            if t.get('subjectName') and not subject_id:
-                print(f"    Subject: {t['subjectName']}")
+            _print_task_item(t, subject_id, show_score=True, show_meta=False)
 
     if grading and not args.pending:
         print(f"{YELLOW}📝 Grading:{RESET}")
         for t in grading:
-            score_str = ""
-            if t.get('score') is not None and t.get('totalScore'):
-                score_str = f" ({t['score']}/{t['totalScore']})"
-            print(f"  [{t['id']}] {t['name']}{score_str}")
-            if t.get('subjectName') and not subject_id:
-                print(f"    Subject: {t['subjectName']} ({t.get('subjectCode', '')})")
-            if t.get('typeName'):
-                print(f"    Type: {t['typeName']}")
-            if t.get('endTime'):
-                end_dt = parse_date_string(t['endTime'])
-                if end_dt:
-                    print(f"    Deadline: {end_dt.strftime('%Y-%m-%d %H:%M')}")
+            _print_task_item(t, subject_id, show_score=True)
 
     if submitted_pending and not args.pending:
         print(f"{CYAN}📤 Submitted (pending grading):{RESET}")
         for t in submitted_pending:
-            score_str = ""
-            if t.get('score') is not None and t.get('totalScore'):
-                score_str = f" ({t['score']}/{t['totalScore']})"
-            print(f"  [{t['id']}] {t['name']}{score_str}")
-            if t.get('subjectName') and not subject_id:
-                print(f"    Subject: {t['subjectName']} ({t.get('subjectCode', '')})")
-            if t.get('typeName'):
-                print(f"    Type: {t['typeName']}")
-            if t.get('endTime'):
-                end_dt = parse_date_string(t['endTime'])
-                if end_dt:
-                    print(f"    Deadline: {end_dt.strftime('%Y-%m-%d %H:%M')}")
+            _print_task_item(t, subject_id, show_score=True)
 
     if unfinished:
         print(f"{YELLOW}⏳ Not submitted:{RESET}")
         for t in unfinished:
-            print(f"  [{t['id']}] {t['name']}")
-            if t.get('subjectName') and not subject_id:
-                print(f"    Subject: {t['subjectName']} ({t.get('subjectCode', '')})")
-            if t.get('typeName'):
-                print(f"    Type: {t['typeName']}")
-            if t.get('endTime'):
-                end_dt = parse_date_string(t['endTime'])
-                if end_dt:
-                    print(f"    Deadline: {end_dt.strftime('%Y-%m-%d %H:%M')}")
+            _print_task_item(t, subject_id)
 
     print(f"Total: {len(tasks)} | {GREEN}Graded: {len(finished)}{RESET} | {YELLOW}Grading: {len(grading)}{RESET} | {CYAN}Pending: {len(submitted_pending)}{RESET} | {YELLOW}Not submitted: {len(unfinished)}{RESET}")

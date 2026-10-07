@@ -12,7 +12,13 @@ echo "Installing dependencies..."
 pip install -r ./requirements.txt
 cat << EOF >> ~/.zshrc
 # DLFetch start
-alias dlfetch="source $(pwd)/.venv/bin/activate && python3 $(pwd)/main.py && deactivate"
+dlfetch() {
+  source "$(pwd)/.venv/bin/activate"
+  python3 "$(pwd)/main.py" "\$@"
+  local status=\$?
+  deactivate
+  return \$status
+}
 # DLFetch end
 EOF
 echo "Installation finished!"

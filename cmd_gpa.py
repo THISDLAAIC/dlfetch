@@ -24,12 +24,7 @@ def print_evaluation(project, indent=2, mapping=None):
     if is_null:
         print(f"{prefix}{'·':<2} {name:<30} {'--':>6}  {'--':>5}  {'--':>4}  ({proportion:.0f}%)")
     else:
-        if gpa >= 4.0:
-            gpa_str = f"{GREEN}{gpa:.2f}{RESET}"
-        elif gpa >= 3.0:
-            gpa_str = f"{YELLOW}{gpa:.2f}{RESET}"
-        else:
-            gpa_str = f"{CYAN}{gpa:.2f}{RESET}"
+        gpa_str = f"{gpa_color(gpa)}{gpa:.2f}{RESET}"
         print(f"{prefix}{'·':<2} {name:<30} {score:>6.1f}  {grade:>5}  {gpa_str}  ({proportion:.0f}%)")
 
     for sub in project.get("evaluationProjectList", []):

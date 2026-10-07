@@ -17,6 +17,36 @@ Linux Secret Service) — never written to disk in plain text. If no keyring is 
 
 To reset saved credentials (e.g. after changing your password), run `dlfetch logout`,
 then run `dlfetch` again to re-enter them.
+
+## MCP over stdio
+
+DLFetch can run as an MCP server for clients such as Claude Desktop and Programmer:
+
+```bash
+dlfetch mcp
+```
+
+Run `dlfetch` once in an interactive terminal before starting MCP so credentials are
+saved. MCP mode is deliberately non-interactive because prompts on stdin would corrupt
+the JSON-RPC transport.
+
+Example MCP client configuration (replace the paths with your installation path):
+
+```json
+{
+  "mcpServers": {
+    "dlfetch": {
+      "command": "/Users/you/dlfetch/.venv/bin/python3",
+      "args": ["/Users/you/dlfetch/main.py", "mcp"]
+    }
+  }
+}
+```
+
+Available tools: `get_overview`, `get_tasks`, `get_schedule`, `get_gpa`,
+`list_subjects`, and `submit_task`. The last tool changes data on THISDL and should
+only be called after confirming the task ID, files, and remark.
+
 ## Uninstallation
 You can uninstall it with a command `zsh <(curl -fsSL https://raw.githubusercontent.com/huangdihd/dlfetch/master/uninstall.sh)`
 ---

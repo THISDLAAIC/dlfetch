@@ -1,4 +1,6 @@
+import os
 import time
+
 import requests
 
 from constants import headers, errors
@@ -6,17 +8,17 @@ from credentials import md5_upper, load_credentials, prompt_and_save, delete_cre
 
 WRONG_CREDENTIALS_STATES = (1010076, 1010082)
 
-def password_hash(password_md5: str, timestamp: int):
-    return md5_upper(password_md5 + str(timestamp))
-
 def sign_in() -> str | None:
     saved = load_credentials()
+    if not saved and os.environ.get("DLFETCH_NONINTERACTIVE") == "1":
+        print("No saved credentials. Run `dlfetch` once in a terminal to sign in.")
+        return None
     if not saved:
         saved = prompt_and_save()
     user_name, password_md5 = saved
 
     timestamp = int(time.time())
-    hashed_password = password_hash(password_md5, timestamp)
+    hashed_password = md5_upper(password_md5 + str(timestamp))
     try:
         session_id = requests.get(
             "https://thisdlstu.schoolis.cn/api/MemberShip/GetStudentCaptchaForLogin",
